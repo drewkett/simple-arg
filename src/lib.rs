@@ -7,7 +7,7 @@ where
     fn from_iter(args: impl Iterator<Item = String>) -> Self;
 
     fn parse() -> Self {
-        Parser::from_iter(std::env::args())
+        Parser::from_iter(std::env::args().skip(1))
     }
 }
 
@@ -16,13 +16,11 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_from_iter() {
+    fn test_empty() {
         #[derive(Debug, SimpleArgs)]
-        struct Foo {
-            _abc: bool,
-        }
+        struct Foo {}
 
-        let args = ["exe", "true"].into_iter().map(|s| s.to_string());
+        let args = [].into_iter();
         let foo = Foo::from_iter(args.into_iter());
         dbg!(foo);
     }

@@ -1,4 +1,4 @@
-use proc_macro::{token_stream, Delimiter, Group, Ident, Punct, TokenStream, TokenTree};
+use proc_macro::{token_stream, Delimiter, Group, Ident, Punct, TokenStream, TokenTree, Span, Spacing};
 use std::{iter::Peekable, str::FromStr};
 
 type PeekableStream = Peekable<token_stream::IntoIter>;
@@ -54,30 +54,63 @@ fn take_delimited_group(input: &mut PeekableStream, delimiter: Delimiter) -> Opt
     }
 }
 
+fn start_span(input: &mut PeekableStream) -> Option<Span> {
+    input.peek().map(|tree| tree.span())
+}
+
+//fn ident(ident: &str, span: Span) -> impl IntoIterator<Item = TokenTree> {
+//    Some(TokenTree::Ident(Ident::new(ident, span)))
+//}
+
 #[proc_macro_derive(SimpleArgs)]
 pub fn simple_args(input: TokenStream) -> TokenStream {
     let mut input = input.into_iter().peekable();
+    let _span = start_span(&mut input).expect("expected struct");
     take_named_ident(&mut input, "struct").expect("expected struct");
     let struct_name = take_ident(&mut input).expect("expected struct name");
     let braces_group = take_delimited_group(&mut input, Delimiter::Brace).expect("expected braces");
     let mut struct_def = braces_group.stream().into_iter().peekable();
+    let mut arguments = vec![];
     loop {
         if struct_def.peek().is_none() {
             break;
         }
-        let _field_name = take_ident(&mut struct_def).expect("expected field name");
+        let field_name = take_ident(&mut struct_def).expect("expected field name");
         take_given_punct(&mut struct_def, ':').expect("expected colon");
-        let _field_type = take_ident(&mut struct_def).expect("expected field type");
+        let field_type = take_ident(&mut struct_def).expect("expected field type");
         let _ = take_given_punct(&mut struct_def, ',');
+        arguments.push((field_name, field_type));
     }
 
-    TokenStream::from_str(&format!(
-        "impl Parser for {} {{
-            fn from_iter(args: impl Iterator<Item = String>) -> {} {{
-                unimplemented!()
+    let mut output_struct = TokenStream::new();
+    output_struct.extend(Some(TokenTree::Ident(struct_name.clone())));
+
+    let mut output_struct_internal = TokenStream::new();
+    for (name, _) in arguments {
+        output_struct_internal.extend([
+          TokenTree::Ident(name),
+          TokenTree::Punct(Punct::new(',', Spacing::Alone))
+        ]);
+    }
+
+    output_struct.extend(Some(TokenTree::Group(Group::new(Delimiter::Brace, output_struct_internal))));
+
+  TokenStream::from_str(&format!(
+    "impl Parser for {} {{
+        fn from_iter(mut args: impl Iterator<Item = String>) -> {} {{
+            loop {{
+                match args.next() {{
+                    Some(arg) => {{
+                        unimplemented!()
+                    }}
+                    None => {{
+                        return {}
+                    }}
+                }}
             }}
-        }}",
-        struct_name, struct_name
-    ))
-    .expect("internal error")
+        }}
+    }}",
+    struct_name, struct_name, output_struct
+))
+.expect("internal error")
 }
