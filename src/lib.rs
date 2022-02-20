@@ -1,18 +1,29 @@
-use proc_macro::{token_stream, TokenStream, TokenTree};
-use std::iter::Peekable;
+pub use simple_args_derive::SimpleArgs;
 
-type PeekableStream = Peekable<token_stream::IntoIter>;
+pub trait Parser
+where
+    Self: Sized,
+{
+    fn from_iter(args: impl Iterator<Item = String>) -> Self;
 
-fn take_ident(input: &mut PeekableStream, ident: &str) -> Option<TokenTree> {
-    match input.peek() {
-        Some(TokenTree::Ident(next_ident)) if next_ident.to_string() == ident => input.next(),
-        _ => None,
+    fn parse() -> Self {
+        Parser::from_iter(std::env::args())
     }
 }
 
-#[proc_macro_derive(SimpleArgs)]
-pub fn args(input: TokenStream) -> TokenStream {
-    let mut input = input.into_iter().peekable();
-    take_ident(&mut input, "struct").expect("expected struct");
-    TokenStream::new()
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_from_iter() {
+        #[derive(Debug, SimpleArgs)]
+        struct Foo {
+            _abc: bool,
+        }
+
+        let args = ["exe", "true"].into_iter().map(|s| s.to_string());
+        let foo = Foo::from_iter(args.into_iter());
+        dbg!(foo);
+    }
 }
