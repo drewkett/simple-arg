@@ -1,0 +1,1 @@
+This is an experimental zero dependency crate for parsing command line arguments. The goal is to support a minimal set of features and minimal customizability
