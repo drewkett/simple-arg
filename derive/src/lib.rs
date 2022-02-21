@@ -36,13 +36,9 @@ pub fn simple_args(input: TokenStream) -> TokenStream {
     output.str("impl Parser for").unwrap();
     output.ident(struct_name.clone());
     output.group(Delimiter::Brace, |impl_wrtr| {
-        impl_wrtr.str("fn from_iter").unwrap();
-        impl_wrtr.group(Delimiter::Parenthesis, |arg_wrtr| {
-            arg_wrtr
-                .str("mut args: impl Iterator<Item=String>")
-                .unwrap();
-        });
-        impl_wrtr.str("-> Self").unwrap();
+        impl_wrtr
+            .str("fn from_iter(mut args: impl Iterator<Item=String>) -> Self")
+            .unwrap();
         impl_wrtr.braces(|fn_wrtr| {
             fn_wrtr.ident_str("loop");
             fn_wrtr.braces(|loop_wrtr| {
