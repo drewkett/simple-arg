@@ -1,10 +1,13 @@
-use proc_macro::{Delimiter, Group, Ident, Punct, Spacing, Span, TokenStream, TokenTree};
+use std::str::FromStr;
+
+use proc_macro::{Delimiter, Group, Ident, LexError, Punct, Spacing, Span, TokenStream, TokenTree};
 
 pub(crate) struct TokenWriter {
     writer: TokenStream,
     span: Span,
 }
 
+#[allow(dead_code)]
 impl TokenWriter {
     pub(crate) fn new(span: Span) -> TokenWriter {
         TokenWriter {
@@ -24,6 +27,12 @@ impl TokenWriter {
     pub(crate) fn ident_str(&mut self, ident: &str) {
         self.writer
             .extend(Some(TokenTree::Ident(Ident::new(ident, self.span))));
+    }
+
+    #[must_use]
+    pub(crate) fn str(&mut self, s: &str) -> Result<(), LexError> {
+        self.writer.extend(TokenStream::from_str(s)?);
+        Ok(())
     }
 
     pub(crate) fn punct(&mut self, punct: char) {
@@ -61,7 +70,7 @@ impl TokenWriter {
         self.group(Delimiter::Parenthesis, closure)
     }
 
-    //pub(crate) fn brackets(&mut self, closure: impl FnOnce(&mut TokenWriter)) {
-    //    self.group(Delimiter::Bracket, closure)
-    //}
+    pub(crate) fn brackets(&mut self, closure: impl FnOnce(&mut TokenWriter)) {
+        self.group(Delimiter::Bracket, closure)
+    }
 }

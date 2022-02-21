@@ -33,46 +33,23 @@ pub fn simple_args(input: TokenStream) -> TokenStream {
     }
 
     let mut output = TokenWriter::new(span);
-    output.ident_str("impl");
-    output.ident_str("Parser");
-    output.ident_str("for");
+    output.str("impl Parser for").unwrap();
     output.ident(struct_name.clone());
     output.group(Delimiter::Brace, |impl_wrtr| {
-        impl_wrtr.ident_str("fn");
-        impl_wrtr.ident_str("from_iter");
+        impl_wrtr.str("fn from_iter").unwrap();
         impl_wrtr.group(Delimiter::Parenthesis, |arg_wrtr| {
-            arg_wrtr.ident_str("mut");
-            arg_wrtr.ident_str("args");
-            arg_wrtr.punct(':');
-            arg_wrtr.ident_str("impl");
-            arg_wrtr.ident_str("Iterator");
-            arg_wrtr.punct('<');
-            arg_wrtr.ident_str("Item");
-            arg_wrtr.punct('=');
-            arg_wrtr.ident_str("String");
-            arg_wrtr.punct('>');
+            arg_wrtr
+                .str("mut args: impl Iterator<Item=String>")
+                .unwrap();
         });
-        impl_wrtr.puncts("->");
-        impl_wrtr.ident_str("Self");
+        impl_wrtr.str("-> Self").unwrap();
         impl_wrtr.braces(|fn_wrtr| {
             fn_wrtr.ident_str("loop");
             fn_wrtr.braces(|loop_wrtr| {
-                loop_wrtr.ident_str("match");
-                loop_wrtr.ident_str("args");
-                loop_wrtr.puncts(".");
-                loop_wrtr.ident_str("next");
-                loop_wrtr.parentheses(|_| ());
+                loop_wrtr.str("match args.next()").unwrap();
                 loop_wrtr.braces(|match_wrtr| {
-                    match_wrtr.ident_str("Some");
-                    match_wrtr.parentheses(|p_wrtr| p_wrtr.ident_str("_"));
-                    match_wrtr.puncts("=>");
-                    match_wrtr.ident_str("unimplemented");
-                    match_wrtr.punct('!');
-                    match_wrtr.parentheses(|_| ());
-                    match_wrtr.punct(',');
-                    match_wrtr.ident_str("None");
-                    match_wrtr.puncts("=>");
-                    match_wrtr.ident_str("return");
+                    match_wrtr.str("Some(_) => unimplemented!(),").unwrap();
+                    match_wrtr.str("None => return").unwrap();
                     match_wrtr.ident(struct_name.clone());
                     match_wrtr.braces(|struct_wrtr| {
                         for (name, _) in arguments {
