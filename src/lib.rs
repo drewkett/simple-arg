@@ -13,6 +13,8 @@ where
 
 #[cfg(test)]
 mod test {
+    use std::panic::catch_unwind;
+
     use super::*;
 
     #[test]
@@ -23,5 +25,44 @@ mod test {
         let args = [].into_iter();
         let foo = Foo::from_iter(args);
         dbg!(foo);
+    }
+
+    #[test]
+    fn test_single_bool() {
+        #[derive(Debug, SimpleArgs)]
+        struct Foo {
+            bar: bool,
+        }
+
+        let args = ["true"].into_iter().map(ToString::to_string);
+        let foo = Foo::from_iter(args);
+        assert!(foo.bar);
+        let args = ["1"].into_iter().map(ToString::to_string);
+        assert!(catch_unwind(|| Foo::from_iter(args)).is_err());
+    }
+
+    #[test]
+    fn test_single_usize() {
+        #[derive(Debug, SimpleArgs)]
+        struct Foo {
+            bar: usize,
+        }
+
+        let args = ["1"].into_iter().map(ToString::to_string);
+        let foo = Foo::from_iter(args);
+        assert_eq!(foo.bar, 1);
+        let args = ["true"].into_iter().map(ToString::to_string);
+        assert!(catch_unwind(|| Foo::from_iter(args)).is_err());
+    }
+
+    #[test]
+    fn test_unexpected_trailing() {
+        #[derive(Debug, SimpleArgs)]
+        struct Foo {
+            _bar: usize,
+        }
+
+        let args = ["1", "1"].into_iter().map(ToString::to_string);
+        assert!(catch_unwind(|| Foo::from_iter(args)).is_err());
     }
 }

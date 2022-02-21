@@ -40,20 +40,28 @@ pub fn simple_args(input: TokenStream) -> TokenStream {
             .str("fn from_iter(mut args: impl Iterator<Item=String>) -> Self")
             .unwrap();
         impl_wrtr.braces(|fn_wrtr| {
-            fn_wrtr.ident_str("loop");
-            fn_wrtr.braces(|loop_wrtr| {
-                loop_wrtr.str("match args.next()").unwrap();
-                loop_wrtr.braces(|match_wrtr| {
-                    match_wrtr.str("Some(_) => unimplemented!(),").unwrap();
-                    match_wrtr.str("None => return").unwrap();
-                    match_wrtr.ident(struct_name.clone());
-                    match_wrtr.braces(|struct_wrtr| {
-                        for (name, _) in arguments {
-                            struct_wrtr.ident(name);
-                            struct_wrtr.punct(',');
-                        }
-                    });
-                })
+            for (name, typ) in &arguments {
+                fn_wrtr.str("let").unwrap();
+                fn_wrtr.ident(name.clone());
+                fn_wrtr.str("= match args.next()").unwrap();
+                fn_wrtr.braces(|match_wrtr| {
+                    match_wrtr.str(&format!(r#"Some(arg) => ::std::str::FromStr::from_str(&arg).expect("expected type {} for arg '{}'"),"#,typ,name)).unwrap();
+                    match_wrtr
+                        .str(&format!(
+                            r#"None => panic!("expected argument for '{}'")"#,
+                            name
+                        ))
+                        .unwrap();
+                });
+                fn_wrtr.punct(';');
+            }
+            fn_wrtr.str(r#"if let Some(arg) = args.next() { panic!("unexpected trailing argument '{}'",arg) }"#).unwrap();
+            fn_wrtr.ident(struct_name.clone());
+            fn_wrtr.braces(|struct_wrtr| {
+                for (name, _) in &arguments {
+                    struct_wrtr.ident(name.clone());
+                    struct_wrtr.punct(',');
+                }
             });
         });
     });
