@@ -21,7 +21,7 @@ mod test {
         struct Foo {}
 
         let args = [].into_iter();
-        let foo = Foo::from_iter(args.into_iter());
+        let foo = Foo::from_iter(args);
         dbg!(foo);
     }
 }

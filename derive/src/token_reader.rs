@@ -1,33 +1,5 @@
-use proc_macro::{token_stream, Delimiter, Group, Ident, Punct, TokenStream, TokenTree};
-
-trait TokenTreeExt {
-    fn try_into_ident(tree: Self) -> Option<Ident>;
-    fn try_into_group(tree: Self) -> Option<Group>;
-    fn try_into_punct(tree: Self) -> Option<Punct>;
-}
-
-impl TokenTreeExt for TokenTree {
-    fn try_into_ident(tree: Self) -> Option<Ident> {
-        match tree {
-            TokenTree::Ident(i) => Some(i),
-            _ => panic!("expected ident"),
-        }
-    }
-
-    fn try_into_group(tree: Self) -> Option<Group> {
-        match tree {
-            TokenTree::Group(g) => Some(g),
-            _ => panic!("expected group"),
-        }
-    }
-
-    fn try_into_punct(tree: Self) -> Option<Punct> {
-        match tree {
-            TokenTree::Punct(p) => Some(p),
-            _ => panic!("expected punct"),
-        }
-    }
-}
+use crate::token_tree_ext::TokenTreeExt;
+use proc_macro::{token_stream, Delimiter, Group, Ident, Punct, Span, TokenStream, TokenTree};
 
 pub(crate) struct TokenReader {
     reader: std::iter::Peekable<token_stream::IntoIter>,
@@ -42,6 +14,10 @@ impl TokenReader {
 
     pub(crate) fn eof(&mut self) -> bool {
         self.reader.peek().is_none()
+    }
+
+    pub(crate) fn next_span(&mut self) -> Option<Span> {
+        self.reader.peek().map(|tt| tt.span())
     }
 
     pub(crate) fn take_named_ident(&mut self, ident: &str) -> Option<Ident> {
