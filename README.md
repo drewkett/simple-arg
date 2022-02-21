@@ -3,7 +3,7 @@ This is an experimental zero dependency crate for parsing command line arguments
 # TODO 
 - Features to implement
   - [ ] Automatic help message generation
-  - [ ] bool arguments
+  - [ ] bool flag arguments
   - [ ] Optional arguments w/ or w/o default value
   - [ ] Multiple arguments via Vec
   - [ ] Subcommands

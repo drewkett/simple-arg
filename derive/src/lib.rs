@@ -2,10 +2,33 @@ pub(crate) mod token_reader;
 pub(crate) mod token_tree_ext;
 pub(crate) mod token_writer;
 
-use proc_macro::{Delimiter, TokenStream};
+use proc_macro::{Delimiter, Ident, TokenStream};
 use token_writer::TokenWriter;
 
 use token_reader::TokenReader;
+
+struct Arg {
+    name: Ident,
+    typ: Ident,
+}
+
+impl Arg {
+    fn new(name: Ident, typ: Ident) -> Self {
+        Self { name, typ }
+    }
+}
+
+struct SimpleArgs {
+    positionals: Vec<Arg>,
+}
+
+impl SimpleArgs {
+    fn new() -> Self {
+        Self {
+            positionals: Vec::new(),
+        }
+    }
+}
 
 #[proc_macro_derive(SimpleArgs)]
 pub fn simple_args(input: TokenStream) -> TokenStream {
@@ -20,7 +43,7 @@ pub fn simple_args(input: TokenStream) -> TokenStream {
         panic!("unexpected value after struct definition")
     }
     let mut struct_rdr = TokenReader::new(braces_group.stream());
-    let mut arguments = vec![];
+    let mut args = SimpleArgs::new();
     loop {
         if struct_rdr.eof() {
             break;
@@ -29,7 +52,7 @@ pub fn simple_args(input: TokenStream) -> TokenStream {
         struct_rdr.take_given_punct(':').expect("expected colon");
         let field_type = struct_rdr.take_ident().expect("expected field type");
         let _ = struct_rdr.take_given_punct(',');
-        arguments.push((field_name, field_type));
+        args.positionals.push(Arg::new(field_name, field_type));
     }
 
     let mut output = TokenWriter::new(span);
@@ -40,7 +63,7 @@ pub fn simple_args(input: TokenStream) -> TokenStream {
             .str("fn from_iter(mut args: impl Iterator<Item=String>) -> Self")
             .unwrap();
         impl_wrtr.braces(|fn_wrtr| {
-            for (name, typ) in &arguments {
+            for Arg { name, typ} in &args.positionals {
                 fn_wrtr.str("let").unwrap();
                 fn_wrtr.ident(name.clone());
                 fn_wrtr.str("= match args.next()").unwrap();
@@ -58,7 +81,7 @@ pub fn simple_args(input: TokenStream) -> TokenStream {
             fn_wrtr.str(r#"if let Some(arg) = args.next() { panic!("unexpected trailing argument '{}'",arg) }"#).unwrap();
             fn_wrtr.ident(struct_name.clone());
             fn_wrtr.braces(|struct_wrtr| {
-                for (name, _) in &arguments {
+                for Arg { name, .. } in &args.positionals {
                     struct_wrtr.ident(name.clone());
                     struct_wrtr.punct(',');
                 }
