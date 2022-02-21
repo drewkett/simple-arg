@@ -42,15 +42,17 @@ mod test {
     }
 
     #[test]
-    fn test_single_usize() {
+    fn test_multiple_usize() {
         #[derive(Debug, SimpleArgs)]
         struct Foo {
             bar: usize,
+            baz: usize,
         }
 
-        let args = ["1"].into_iter().map(ToString::to_string);
+        let args = ["1", "2"].into_iter().map(ToString::to_string);
         let foo = Foo::from_iter(args);
         assert_eq!(foo.bar, 1);
+        assert_eq!(foo.baz, 2);
         let args = ["true"].into_iter().map(ToString::to_string);
         assert!(catch_unwind(|| Foo::from_iter(args)).is_err());
     }
