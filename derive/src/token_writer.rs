@@ -1,7 +1,10 @@
 use std::str::FromStr;
 
-use proc_macro::{Delimiter, Group, Ident, LexError, Punct, Spacing, Span, TokenStream, TokenTree};
+use proc_macro::{
+    Delimiter, Group, Ident, LexError, Literal, Punct, Spacing, Span, TokenStream, TokenTree,
+};
 
+#[derive(Clone)]
 pub(crate) struct TokenWriter {
     writer: TokenStream,
     span: Span,
@@ -20,6 +23,11 @@ impl TokenWriter {
         self.writer
     }
 
+    pub(crate) fn string_literal(&mut self, lit: &str) {
+        self.writer
+            .extend(Some(TokenTree::Literal(Literal::string(lit))));
+    }
+
     pub(crate) fn ident(&mut self, ident: Ident) {
         self.writer.extend(Some(TokenTree::Ident(ident)));
     }
@@ -33,6 +41,10 @@ impl TokenWriter {
     pub(crate) fn str(&mut self, s: &str) -> Result<(), LexError> {
         self.writer.extend(TokenStream::from_str(s)?);
         Ok(())
+    }
+
+    pub(crate) fn extend(&mut self, s: TokenWriter) {
+        self.writer.extend(s.writer);
     }
 
     pub(crate) fn punct(&mut self, punct: char) {

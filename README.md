@@ -3,7 +3,8 @@ This is an experimental zero dependency crate for parsing command line arguments
 # TODO 
 - Features to implement
   - [ ] Automatic help message generation
-  - [ ] bool flag arguments
+  - [x] bool flag arguments
+    - Add proper support for none single word names
   - [ ] Optional arguments w/ or w/o default value
   - [ ] Multiple arguments via Vec
   - [ ] Subcommands

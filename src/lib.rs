@@ -28,7 +28,7 @@ mod test {
     }
 
     #[test]
-    fn test_single_bool() {
+    fn test_positional_bool() {
         #[derive(Debug, SimpleArgs)]
         struct Foo {
             bar: bool,
@@ -41,6 +41,23 @@ mod test {
         assert!(catch_unwind(|| Foo::from_iter(args)).is_err());
     }
 
+    #[test]
+    fn test_flag_bool() {
+        #[derive(Debug, SimpleArgs)]
+        struct Foo {
+            #[arg(optional)]
+            bar: bool,
+        }
+
+        let args = ["--bar"].into_iter().map(ToString::to_string);
+        let foo = Foo::from_iter(args);
+        assert!(foo.bar);
+        let args = [].into_iter();
+        let foo = Foo::from_iter(args);
+        assert!(!foo.bar);
+        let args = ["1"].into_iter().map(ToString::to_string);
+        assert!(catch_unwind(|| Foo::from_iter(args)).is_err());
+    }
     #[test]
     fn test_multiple_usize() {
         #[derive(Debug, SimpleArgs)]
